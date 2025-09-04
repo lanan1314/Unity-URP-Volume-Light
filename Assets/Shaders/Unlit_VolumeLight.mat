@@ -7,8 +7,8 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Unlit_VolumetricLightingShader
-  m_Shader: {fileID: 4800000, guid: f0842317afa007b4dbe8af2c9fe682d4, type: 3}
+  m_Name: Unlit_VolumeLight
+  m_Shader: {fileID: 4800000, guid: cb9db29b0f5bca94ca1f39bb8739166e, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -29,10 +29,7 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _Density: 0.25
-    - _Intensity: 9
-    - _MaxDistance: 24.5
-    - _NoiseStrength: 0.5
+    - _Intensity: 1
     m_Colors: []
   m_BuildTextureStacks: []
   m_AllowLocking: 1

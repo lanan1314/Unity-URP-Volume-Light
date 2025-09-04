@@ -1,3 +1,5 @@
+// 基于屏幕空间的体积光
+// 核心思想是：在屏幕像素对应的摄像机射线方向上做多次采样积分，模拟光在空气/介质中被散射和衰减的效果。
 Shader "Unlit/VolumetricLightingShader"
 {
 	Properties
@@ -5,7 +7,7 @@ Shader "Unlit/VolumetricLightingShader"
 		_MainTex ("Texture", 2D) = "white" {}
 		_NoiseStrength("Noise Strength",float) = 0.5
 		_Intensity("Intensity",float) = 1
-		_Density("Density", float) = 0.25
+		_Density("Density", float) = 0.25	// 介质密度
 		_MaxDistance("Max Distance", float) = 20
 	}
 	SubShader
@@ -71,9 +73,9 @@ Shader "Unlit/VolumetricLightingShader"
 				float linDepth01 = Linear01Depth(rawDepth, _ZBufferParams);
 				float2 ndc = uv * 2 - 1;
 				float3 farPosNDC = float3(ndc.xy, 1) * _ProjectionParams.z;
-				float4 viewPos = mul(unity_CameraInvProjection, farPosNDC.xyzz);
+				float4 viewPos = mul(unity_CameraInvProjection, farPosNDC.xyzz); // 反投影矩阵
 				viewPos.xyz *= linDepth01;
-				float3 hitWS = mul(UNITY_MATRIX_I_V, viewPos).xyz;
+				float3 hitWS = mul(UNITY_MATRIX_I_V, viewPos).xyz; // 相机逆视图矩阵
 
 				// 视线、步长与距离限制
 				float3 camWS = _WorldSpaceCameraPos;
@@ -87,7 +89,7 @@ Shader "Unlit/VolumetricLightingShader"
 
 				half3 sceneColor = SAMPLE_TEXTURE2D(_CameraOpaqueTexture, sampler_CameraOpaqueTexture, uv).rgb;
 
-				// 体积积分：Beer-Lambert 衰减
+				// 体积积分
 				half3 accum = 0;
 				float T = 1.0; // 透过率
 				float sigma = _Density;
@@ -97,12 +99,15 @@ Shader "Unlit/VolumetricLightingShader"
 				{
 					p += dir * stepLen;
 
+					// 阴影采样
 					float4 shadowPos = TransformWorldToShadowCoord(p);
 					float lightAtten = MainLightRealtimeShadow(shadowPos);
 
+					// 散射强度
 					half3 Scatt = _MainLightColor.rgb * lightAtten * _Intensity;
 					accum += T * Scatt;
 
+					// Beer-Lambert 衰减
 					T *= exp(-sigma * stepLen);
 				}
 

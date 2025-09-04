@@ -1,3 +1,4 @@
+// 基于模型的体积光束Shader
 Shader "Unlit/Tindall"
 {
     Properties
@@ -5,17 +6,17 @@ Shader "Unlit/Tindall"
         _MainTex ("Light Beam Mask", 2D) = "white" {}
         _Color ("Light Color", Color) = (1,1,1,1)
         _Intensity ("Intensity", Range(0,5)) = 1
-        _Softness ("Edge Softness", Range(0,1)) = 0.5
+        _Softness ("Edge Softness", Range(0,1)) = 0.5  // 边缘柔化程度
         _NoiseScale ("Noise Scale", Range(0.1,10)) = 2
         _NoiseSpeed ("Noise Speed", Range(0.1,5)) = 1
-        _Octaves ("Noise Octaves", Range(1,6)) = 4
-        _FadeStart ("Fade Start", Range(0,1)) = 0.7  // 开始淡出的位置
-        _FadeEnd ("Fade End", Range(0,1)) = 1.0       // 完全淡出的位置
+        _Octaves ("Noise Octaves", Range(1,6)) = 4     // 噪声叠加层数
+        _FadeStart ("Fade Start", Range(0,1)) = 0.7    // 开始淡出的位置
+        _FadeEnd ("Fade End", Range(0,1)) = 1.0        // 完全淡出的位置
     }
     SubShader
     {
         Tags { "RenderType"="Transparent" "Queue"="Transparent" }
-        Blend One One // Additive blending
+        Blend One One // Additive blending：光是叠加的，所以多个光束会互相叠加，越亮越强。
         ZWrite Off
         Cull Front
 
@@ -73,7 +74,11 @@ Shader "Unlit/Tindall"
                 return lerp(lerp(a, b, u.x), lerp(c, d, u.x), u.y);
             }
 
-            // --- Fractal Brownian Motion ---
+            /*
+             * Fractal Brownian Motion（分形布朗运动噪声）：
+                * 在多个尺度（频率/振幅）叠加噪声。
+                * octaves = 层数，越多越复杂细腻。
+             */
             float fbm(float2 p, int octaves)
             {
                 float value = 0.0;
@@ -102,11 +107,11 @@ Shader "Unlit/Tindall"
                 // 从UV贴图获取光强
                 half mask = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, i.uv).r;
 
-                // 动态UV + 时间
+                // 动态UV + 时间 
                 float2 uv = i.uv * _NoiseScale;
-                uv.y += _Time.y * _NoiseSpeed;
+                uv.y += _Time.y * _NoiseSpeed;  // 向上流动
 
-                // fbm 动态噪声
+                // fbm 动态噪声，乘上mask来限制光束的区域
                 float n = fbm(uv, _Octaves) * mask;
 
                 // 基于UV Y坐标的淡出效果
@@ -119,7 +124,7 @@ Shader "Unlit/Tindall"
                 // 应用淡出效果
                 n *= fadeFactor;
 
-                // 边缘柔化
+                // 边缘柔化：边缘越柔和 越模糊
                 n = pow(n, 1.0 + _Softness * 5);
 
                 half3 col = _Color.rgb * n * _Intensity;
