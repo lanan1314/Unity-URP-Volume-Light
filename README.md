@@ -1,6 +1,6 @@
 Unity URP Volume Light
 
-Volume light based on the quad - shader
+Volumetric Mesh Approximation - shader
 https://github.com/user-attachments/assets/2e1a6b8d-62a9-4e8a-b8be-7c0db771479b
 
 Volume light based on screen space - Full Screen Pass Renderer Feature and shader
